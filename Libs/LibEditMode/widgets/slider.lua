@@ -20,6 +20,29 @@ local function showTooltip(self)
 	end
 end
 
+local function getDecimalPlaces(stepSize)
+	if not stepSize then
+		return 0
+	end
+
+	local text = tostring(stepSize)
+	local decimals = text:match("%.(%d+)")
+
+	return decimals and #decimals or 0
+end
+
+local function roundToStep(value, stepSize)
+	if not stepSize or stepSize <= 0 then
+		return value
+	end
+
+	return math.floor(value / stepSize + 0.5) * stepSize
+end
+
+local function formatValue(value, stepSize)
+	return string.format("%." .. getDecimalPlaces(stepSize) .. "f", roundToStep(value, stepSize))
+end
+
 local sliderMixin = {}
 function sliderMixin:Setup(data)
 	self.setting = data
@@ -28,10 +51,13 @@ function sliderMixin:Setup(data)
 
 	self.initInProgress = true
 	self.formatters = {}
-	self.formatters[MinimalSliderWithSteppersMixin.Label.Right] =
-		CreateMinimalSliderFormatter(MinimalSliderWithSteppersMixin.Label.Right, data.formatter)
-
 	local stepSize = data.valueStep or 1
+	local formatter = data.formatter or function(value)
+		return formatValue(value, stepSize)
+	end
+	self.formatters[MinimalSliderWithSteppersMixin.Label.Right] =
+		CreateMinimalSliderFormatter(MinimalSliderWithSteppersMixin.Label.Right, formatter)
+
 	local steps = (data.maxValue - data.minValue) / stepSize
 	self.Slider:Init(
 		data.get(lib:GetActiveLayoutName()) or data.default,
@@ -60,6 +86,7 @@ end
 
 function sliderMixin:OnSliderValueChanged(value)
 	if not self.initInProgress then
+		value = roundToStep(value, self.setting.valueStep)
 		self.setting.set(lib:GetActiveLayoutName(), value, false)
 
 		self:GetParent():GetParent():RefreshWidgets()
@@ -85,8 +112,7 @@ local function onEditFocus(self)
 	self:SetPoint("BOTTOMLEFT", parent.Slider)
 
 	-- set editbox text to current slider value
-	-- TODO: maybe flatten the value here
-	self:SetText(parent.Slider.Slider:GetValue())
+	self:SetText(formatValue(parent.Slider.Slider:GetValue(), parent.setting and parent.setting.valueStep))
 	self:SetCursorPosition(0)
 end
 
@@ -95,10 +121,14 @@ local function onEditSubmit(self)
 
 	-- get bounds and value
 	local min, max = parent.Slider.Slider:GetMinMaxValues()
-	local value = self:GetText()
+	local value = tonumber(self:GetText())
 
 	-- trigger change if value is a valid number
-	if tonumber(value) then
+	if value then
+		local stepSize = parent.setting and parent.setting.valueStep
+
+		value = roundToStep(value, stepSize)
+
 		-- use bounds when updating value
 		parent.Slider:SetValue(math.min(math.max(value, min), max))
 	end

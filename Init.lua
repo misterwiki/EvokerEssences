@@ -19,6 +19,12 @@ EventUtil.ContinueOnAddOnLoaded(addonName, function()
 	EssencesSaved = EssencesSaved or {}
 	EssencesSaved.Settings = EssencesSaved.Settings or {}
 
+	if EssencesSaved.Settings.AnchorMode == nil and EssencesSaved.Settings.AnchorToScreenCenter ~= nil then
+		EssencesSaved.Settings.AnchorMode = EssencesSaved.Settings.AnchorToScreenCenter
+			and Private.Enum.AnchorMode.FreePosition
+			or Private.Enum.AnchorMode.CooldownViewer
+	end
+
 	local defaults = Private.Settings.GetDefaultSettings()
 
 	for key, value in pairs(defaults) do

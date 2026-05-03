@@ -25,6 +25,12 @@ L.Settings.ShowRechargingLabel = "Show Recharging"
 L.Settings.ShowRechargingTooltip = "Darken the essence currently recharging."
 L.Settings.HideWhileSkyridingLabel = "Hide While Skyriding"
 L.Settings.HideWhileSkyridingTooltip = "Hide the essence bar only while Skyriding is available on your current mount."
+L.Settings.AnchorModeLabel = "Position Mode"
+L.Settings.AnchorModeTooltip = "Choose whether the essence bar follows the cooldown viewer or uses a free screen-center position."
+L.Settings.AnchorModeLabels = {
+	[Private.Enum.AnchorMode.FreePosition] = "Free Position (Screen Center)",
+	[Private.Enum.AnchorMode.CooldownViewer] = "Cooldown Viewer",
+}
 
 L.Settings.BaseColorLabel = "Base Color"
 L.Settings.BaseColorTooltip = nil
@@ -32,8 +38,8 @@ L.Settings.CapColorLabel = "Cap Color"
 L.Settings.CapColorTooltip = "Color used when at maximum essences."
 L.Settings.NearlyCapColorLabel = "Nearly Cap Color"
 L.Settings.NearlyCapColorTooltip = "Color used when one essence below the maximum."
-L.Settings.RechargingDarknessLabel = "Recharging Darkness"
-L.Settings.RechargingDarknessTooltip = "Darkens the current bar color for the essence currently recharging. 0 = unchanged, 1 = black."
+L.Settings.RechargingDarknessLabel = "Recharging Brightness"
+L.Settings.RechargingDarknessTooltip = "Scales the current bar color for the essence currently recharging. 0 = black, 1 = unchanged."
 
 L.Settings.OffsetXLabel = "Offset X"
 L.Settings.OffsetXTooltip = nil
@@ -48,6 +54,8 @@ L.Settings.BackgroundBrightnessTooltip =
 	"Scales the bar color to produce the background color. 0 = black, 1 = same as bar."
 L.Settings.MinWidthLabel = "Min Width"
 L.Settings.MinWidthTooltip = nil
+L.Settings.WidthLabel = "Width"
+L.Settings.WidthTooltip = nil
 
 L.Settings.PresetLabel = "Preset"
 L.Settings.PresetTooltip = nil

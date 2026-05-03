@@ -11,6 +11,7 @@
 ---@field Events table<string, string>
 ---@field Preset table<string, number>
 ---@field EssenceBurstIndicator table<string, number>
+---@field AnchorMode table<string, number>
 
 ---@class EssencesColor
 ---@field r number
@@ -47,6 +48,7 @@
 ---@field UpdateVisibility fun(self: EssencesParentFrame)
 ---@field QueueVisibilityRefresh fun(self: EssencesParentFrame)
 ---@field visibilityRefreshTicker FunctionContainer?
+---@field ApplyAnchor fun(self: EssencesParentFrame)
 ---@field GetStatusBarAtIndex fun(self: EssencesParentFrame, i: number): EssencesStatusBar
 ---@field Relayout fun(self: EssencesParentFrame)
 ---@field CountActiveEssenceBursts fun(self: EssencesParentFrame): number
@@ -64,6 +66,8 @@
 ---@field ShowCantCastOpacity boolean
 ---@field ShowRecharging boolean
 ---@field HideWhileSkyriding boolean
+---@field AnchorMode number
+---@field AnchorToScreenCenter boolean?
 ---@field BaseColor string
 ---@field CapColor string
 ---@field NearlyCapColor string

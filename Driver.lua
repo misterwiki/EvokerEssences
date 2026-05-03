@@ -12,20 +12,37 @@ table.insert(Private.LoginFnQueue, function()
 
 	---@type EssencesParentFrame
 	local frame = CreateFrame("Frame", "EssencesParentFrame", EssentialCooldownViewer)
-	frame:ClearAllPoints()
-	PixelUtil.SetPoint(
-		frame,
-		"BOTTOM",
-		EssentialCooldownViewer,
-		"TOP",
-		EssencesSaved.Settings.OffsetX,
-		EssencesSaved.Settings.OffsetY
-	)
 
 	frame.imminentDestructionStacks = 0
 	frame.specId = 0
 	frame.availableEssenceBursts = 0
 	frame.lastImminentDestructionStart = 0
+
+	function frame:ApplyAnchor()
+		self:ClearAllPoints()
+
+		if EssencesSaved.Settings.AnchorMode == Private.Enum.AnchorMode.FreePosition then
+			PixelUtil.SetPoint(
+				self,
+				"CENTER",
+				UIParent,
+				"CENTER",
+				EssencesSaved.Settings.OffsetX,
+				EssencesSaved.Settings.OffsetY
+			)
+		else
+			PixelUtil.SetPoint(
+				self,
+				"BOTTOM",
+				EssentialCooldownViewer,
+				"TOP",
+				EssencesSaved.Settings.OffsetX,
+				EssencesSaved.Settings.OffsetY
+			)
+		end
+	end
+
+	frame:ApplyAnchor()
 
 	function frame:ShouldHideForSkyriding()
 		if not EssencesSaved.Settings.HideWhileSkyriding then
@@ -213,8 +230,8 @@ table.insert(Private.LoginFnQueue, function()
 			local barR, barG, barB, barA = r, g, b, a
 
 			if EssencesSaved.Settings.ShowRecharging and i == currentPower + 1 and i <= maxPower then
-				local dark = 1 - EssencesSaved.Settings.RechargingDarkness
-				barR, barG, barB = r * dark, g * dark, b * dark
+				local bright = EssencesSaved.Settings.RechargingDarkness
+				barR, barG, barB = r * bright, g * bright, b * bright
 			end
 
 			statusBar:SetStatusBarColor(barR, barG, barB, barA)
@@ -268,27 +285,25 @@ table.insert(Private.LoginFnQueue, function()
 
 	function frame:Relayout()
 		local cdvWidth = EssentialCooldownViewer:GetWidth()
+		local isFreePosition = EssencesSaved.Settings.AnchorMode == Private.Enum.AnchorMode.FreePosition
 
-		if cdvWidth <= 2 then
+		frame:ApplyAnchor()
+
+		if cdvWidth <= 2 and not isFreePosition then
 			return
 		end
 
+		local widthToDistribute = isFreePosition
+			and EssencesSaved.Settings.MinWidth
+			or math.max(cdvWidth + 0.5, EssencesSaved.Settings.MinWidth)
+
 		PixelUtil.SetSize(
 			frame,
-			math.max(EssencesSaved.Settings.MinWidth, cdvWidth),
+			widthToDistribute,
 			EssencesSaved.Settings.BarHeight - 2
 		)
-		frame:ClearAllPoints()
-		PixelUtil.SetPoint(
-			frame,
-			"BOTTOM",
-			EssentialCooldownViewer,
-			"TOP",
-			EssencesSaved.Settings.OffsetX,
-			EssencesSaved.Settings.OffsetY
-		)
 
-		local widthToDistribute = math.floor(math.max(cdvWidth + 0.5, EssencesSaved.Settings.MinWidth))
+		widthToDistribute = math.floor(widthToDistribute)
 		local maxPower = self:GetMaxPower()
 		local totalBarSpace = widthToDistribute - (maxPower - 1) * EssencesSaved.Settings.Gap
 		local individualBarWidth = math.floor(totalBarSpace / maxPower)
@@ -388,6 +403,9 @@ table.insert(Private.LoginFnQueue, function()
 		elseif key == Private.Settings.Keys.HideWhileSkyriding then
 			RegisterEvents()
 			frame:QueueVisibilityRefresh()
+		elseif key == Private.Settings.Keys.AnchorMode then
+			frame:Relayout()
+			LibEditMode:RefreshFrameSettings(frame)
 		elseif
 			key == Private.Settings.Keys.OffsetX
 			or key == Private.Settings.Keys.OffsetY
@@ -799,6 +817,47 @@ table.insert(Private.LoginFnQueue, function()
 				}
 			end
 
+			if key == Private.Settings.Keys.AnchorMode then
+				local function Generator(_, rootDescription)
+					local options = {
+						Private.Enum.AnchorMode.FreePosition,
+						Private.Enum.AnchorMode.CooldownViewer,
+					}
+
+					for i = 1, #options do
+						local id = options[i]
+						local label = Private.L.Settings.AnchorModeLabels[id]
+
+						local function IsEnabled()
+							return EssencesSaved.Settings.AnchorMode == id
+						end
+
+						local function SetProxy()
+							if EssencesSaved.Settings.AnchorMode ~= id then
+								EssencesSaved.Settings.AnchorMode = id
+								Private.EventRegistry:TriggerEvent(
+									Private.Enum.Events.SETTING_CHANGED,
+									Private.Settings.Keys.AnchorMode,
+									id
+								)
+							end
+						end
+
+						rootDescription:CreateRadio(label, IsEnabled, SetProxy)
+					end
+				end
+
+				---@type LibEditModeDropdown
+				return {
+					name = Private.L.Settings.AnchorModeLabel,
+					kind = Enum.EditModeSettingDisplayType.Dropdown,
+					default = defaults.AnchorMode,
+					desc = Private.L.Settings.AnchorModeTooltip,
+					generator = Generator,
+					set = function() end,
+				}
+			end
+
 			if key == Private.Settings.Keys.ShowBackground then
 				local function Get(_)
 					return EssencesSaved.Settings.ShowBackground
@@ -1081,10 +1140,14 @@ table.insert(Private.LoginFnQueue, function()
 
 				---@type LibEditModeSlider
 				return {
-					name = Private.L.Settings.MinWidthLabel,
+					name = EssencesSaved.Settings.AnchorMode == Private.Enum.AnchorMode.FreePosition
+						and Private.L.Settings.WidthLabel
+						or Private.L.Settings.MinWidthLabel,
 					kind = Enum.EditModeSettingDisplayType.Slider,
 					default = defaults.MinWidth,
-					desc = Private.L.Settings.MinWidthTooltip,
+					desc = EssencesSaved.Settings.AnchorMode == Private.Enum.AnchorMode.FreePosition
+						and Private.L.Settings.WidthTooltip
+						or Private.L.Settings.MinWidthTooltip,
 					get = Get,
 					set = Set,
 					minValue = sliderSettings.min,

@@ -20,3 +20,9 @@ Private.Enum.EssenceBurstIndicator = {
 	Glow = 1,
 	Border = 2,
 }
+
+---@enum AnchorMode
+Private.Enum.AnchorMode = {
+	FreePosition = 1,
+	CooldownViewer = 2,
+}
